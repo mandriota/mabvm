@@ -1,4 +1,5 @@
-# MabVM
+# Mab Virtual Machine
+**Esoteric Stack Language Reduced Instruction Set Virtual Machine**
 
 ## Memory Model
 
