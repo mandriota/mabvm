@@ -115,26 +115,6 @@ func (ap *AsmParser) nextSect() {
 	}
 }
 
-func (ap *AsmParser) nextPush() {
-	for !isBegPushOrSectOrNull(ap.peekByte()) {
-		ap.readByte()
-	}
-}
-
-func (ap *AsmParser) readPushes() []string {
-	pushes := make([]string, 0)
-
-	for ap.nextPush(); ap.peekByte() == '<'; ap.nextPush() {
-		beg := ap.pos
-
-		for isEndPush(ap.peekByte()) {
-			pushes = append(pushes, ap.src[beg:ap.pos])
-		}
-	}
-
-	return pushes
-}
-
 func isVoid(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\r' || b == '\t' || b == '\v'
 }
@@ -143,10 +123,4 @@ func isSectOrNull(b byte) bool {
 	return b == ':' || b == 0
 }
 
-func isBegPushOrSectOrNull(b byte) bool {
-	return b == '<' || isSectOrNull(b)
-}
-
-func isEndPush(b byte) bool {
-	return b == '>' || b == 0
-}
+// TODO: add file import support

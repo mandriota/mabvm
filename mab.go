@@ -21,10 +21,12 @@ import (
 
 // TODO: add multithreading support
 
+type Opcode = byte
+
 type Word = int64 // machine word
 
 type Machine struct {
-	code []byte
+	code []Opcode
 	data []Word
 
 	codP Word
@@ -36,7 +38,7 @@ type Machine struct {
 	// TODO: add machine status public field
 }
 
-func NewMachine(l *log.Logger, code []byte, data []Word) *Machine {
+func NewMachine(l *log.Logger, code []Opcode, data []Word) *Machine {
 	return &Machine{
 		code: code,
 		data: data,
