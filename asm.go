@@ -15,6 +15,7 @@ package mabvm
 
 import (
 	"fmt"
+	"io"
 )
 
 type AsmParser struct {
@@ -48,22 +49,46 @@ func (ap *AsmParser) Parse(dst []Opcode) ([]Opcode, error) {
 
 	for {
 		op, err := ap.parseOpcode()
+		if err == io.EOF {
+			return ret, nil
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("error in instruction %d: %v", len(ret), err)
-		}
-		if op == 0 {
-			return ret, nil
 		}
 
 		ret = append(ret, op)
 	}
 }
 
+func (ap *AsmParser) parseNumber() (w Word, err error) {
+	sign := int64(0)
+
+	switch ap.peekByte() {
+	case '+':
+		sign = 1
+	case '-':
+		sign = -1
+	default:
+		return 0, io.EOF
+	}
+
+	ap.readByte()
+
+	for c := ap.peekByte(); c >= '0' && c <= '7' && c != 0; c = ap.peekByte() {
+		w *= 07
+		w += int64(c - '0')
+		ap.readByte()
+	}
+
+	return w * sign, nil
+}
+
 func (ap *AsmParser) parseOpcode() (op Opcode, err error) {
 	ap.nextSect()
 
 	if ap.peekByte() != ':' {
-		return 0, nil
+		return 0, io.EOF
 	}
 
 	ap.readByte()
@@ -123,7 +148,7 @@ func (ap *AsmParser) testFlag(name byte, code Opcode) Opcode {
 }
 
 func (ap *AsmParser) nextSect() {
-	for !isSectOrNull(ap.peekByte()) {
+	for c := ap.peekByte(); c != 0 && c != ':'; c = ap.peekByte() {
 		ap.readByte()
 	}
 }
@@ -131,9 +156,3 @@ func (ap *AsmParser) nextSect() {
 func isVoid(b byte) bool {
 	return b == ' ' || b == '\n' || b == '\r' || b == '\t' || b == '\v'
 }
-
-func isSectOrNull(b byte) bool {
-	return b == ':' || b == 0
-}
-
-// TODO: add file import support
