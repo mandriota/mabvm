@@ -14,7 +14,6 @@
 package mabvm
 
 import (
-	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +28,6 @@ func TestMachineRun(t *testing.T) {
 		{
 			name: "incriment number",
 			init: NewMachine(
-				log.Default(),
 				[]byte{
 					VJ | EF,
 				},
@@ -40,7 +38,6 @@ func TestMachineRun(t *testing.T) {
 		{
 			name: "decriment number",
 			init: NewMachine(
-				log.Default(),
 				[]byte{
 					VJ | IF | EF,
 				},
@@ -51,7 +48,6 @@ func TestMachineRun(t *testing.T) {
 		{
 			name: "copy data",
 			init: NewMachine(
-				log.Default(),
 				[]byte{
 					DJ | IF, VJ, DJ | IF, VJ | IF,
 				},

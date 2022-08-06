@@ -14,8 +14,9 @@
 package mabvm
 
 import (
-	"log"
+	"bytes"
 	"runtime"
+	"strconv"
 	"sync/atomic"
 )
 
@@ -33,39 +34,45 @@ type Machine struct {
 	srcP Word
 	dstP Word
 
-	l *log.Logger
-
 	// TODO: add machine status public field
+	// TODO: add debug mode
 }
 
-func NewMachine(l *log.Logger, code []Opcode, data []Word) *Machine {
+func NewMachine(code []Opcode, data []Word) *Machine {
 	return &Machine{
 		code: code,
 		data: data,
-		l:    l,
 		srcP: int64(len(data)) - 1,
 		dstP: int64(len(data)) - 1,
 	}
 }
 
-func (m *Machine) dump() {
-	m.l.Println("writing machine state dump ...")
+func (m *Machine) Dump(dst []byte) []byte {
+	b := bytes.NewBuffer(dst)
 
-	m.l.Printf("dump: codP=%d\n", m.codP)
-	m.l.Printf("dump: srcP=%d\n", m.srcP)
-	m.l.Printf("dump: dstP=%d\n", m.dstP)
+	b.WriteString("codP=")
+	b.WriteString(strconv.FormatInt(m.codP, 10))
+	b.WriteString("\nsrcP=")
+	b.WriteString(strconv.FormatInt(m.srcP, 10))
+	b.WriteString("\ndstP=")
+	b.WriteString(strconv.FormatInt(m.dstP, 10))
 
 	for i, el := range m.data {
-		m.l.Printf("dump: data[%d]=%d\n", i, el)
+		b.WriteString("\ndata[")
+		b.WriteString(strconv.FormatInt(int64(i), 10))
+		b.WriteString("]=")
+		b.WriteString(strconv.FormatInt(el, 10))
 	}
+
+	b.WriteByte('\n')
+
+	return b.Bytes()
 }
 
 func (m *Machine) Run() {
 	for m.codP = 0; m.codP < Word(len(m.code)); m.codP++ {
 		op := m.code[m.codP]
 		cx := Word(1)
-
-		m.l.Printf("executing instruction %b (jump %d) ...\n", op, op&JMask)
 
 		if op&EF == EF {
 			cx = atomic.LoadInt64(&m.data[m.srcP])
@@ -75,14 +82,12 @@ func (m *Machine) Run() {
 		srcD := atomic.LoadInt64(&m.data[m.srcP])
 		dstD := atomic.LoadInt64(&m.data[m.dstP])
 
+		// int64(op>>7)*srcD < dstD || int64(op>>6)*srcD == dstD || int64(op>>5)*srcD > dstD
 		if !(((op&EC == 0) || (srcD == dstD)) && ((op&GC == 0) || (srcD > dstD)) && ((op&LC == 0) || (srcD < dstD))) {
-			m.l.Println("instruction not will executed: flags does not equal.")
 			continue
 		}
 
 		if op&MF == MF {
-			m.l.Println("interrupting machine: waiting for response ...")
-
 			for srcD == atomic.LoadInt64(&m.data[m.srcP]) {
 				runtime.Gosched()
 			}
@@ -91,8 +96,6 @@ func (m *Machine) Run() {
 		if op&IF == IF {
 			cx *= -1
 		}
-
-		m.dump()
 
 		switch op & JMask {
 		case SJ:
@@ -106,7 +109,5 @@ func (m *Machine) Run() {
 			m.srcP--
 			m.dstP++
 		}
-
-		m.dump()
 	}
 }

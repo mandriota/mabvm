@@ -19,55 +19,127 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAsmParser(t *testing.T) {
+func TestAsmParser_parseOpcode(t *testing.T) {
 	tests := []struct {
-		src string
-		exp Opcode
+		name   string
+		source string
+		expect []Opcode
 	}{
-		{src: ":S:IE:E", exp: SJ | IF | EF | EC},
+		{
+			name:   "maximal case",
+			source: ":D:IEM:LEG",
+			expect: []Opcode{DJ | IF | EF | MF | LC | EC | GC},
+		},
+		{
+			name:   "minimal case",
+			source: ":V",
+			expect: []Opcode{VJ},
+		},
 	}
 
 	ap := &AsmParser{}
 
 	for _, test := range tests {
-		ap.src = test.src
-		ap.pos = 0
+		t.Run(test.name, func(t *testing.T) {
+			mc := &Machine{}
 
-		v, err := ap.parseOpcode()
-		if err != nil {
-			t.Log(err)
-			continue
-		}
-		assert.Equal(t, test.exp, v)
+			ap.Reset(test.source)
+
+			assert.Equal(t, nil, ap.parseOpcode(mc))
+			assert.Equal(t, test.expect, mc.code)
+		})
 	}
 }
 
-func TestAsmParserMulti(t *testing.T) {
-	test := `	:S:I
-	:D:IE ; do something
-	:V::E
-	:C:I:LG
-	`
-
-	ops, err := (&AsmParser{
-		src: test,
-	}).Parse(nil)
-	if err != nil {
-		t.Fatal(err)
+func TestAsmParser_parseNumber(t *testing.T) {
+	tests := []struct {
+		name   string
+		source string
+		expect []Word
+	}{
+		{
+			name:   "one binary digit",
+			source: "+b1",
+			expect: []Word{0b1},
+		},
+		{
+			name:   "one octave digit",
+			source: "+o5",
+			expect: []Word{05},
+		},
+		{
+			name:   "one decimal digit",
+			source: "+d9",
+			expect: []Word{9},
+		},
+		{
+			name:   "positive binary number",
+			source: "+b101010010001111011011",
+			expect: []Word{0b101010010001111011011},
+		},
+		{
+			name:   "positive octave number",
+			source: "+o7654325034562567",
+			expect: []Word{07654325034562567},
+		},
+		{
+			name:   "positive decimal number",
+			source: "+d4993509343295043294",
+			expect: []Word{4993509343295043294},
+		},
+		{
+			name:   "negative binary number",
+			source: "-b1011101010010010010101011110",
+			expect: []Word{-0b1011101010010010010101011110},
+		},
+		{
+			name:   "negative octave number",
+			source: "-o76523251643042042043",
+			expect: []Word{-076523251643042042043},
+		},
+		{
+			name:   "negative decimal number",
+			source: "-d3928419499493694382",
+			expect: []Word{-3928419499493694382},
+		},
 	}
 
-	for _, op := range ops {
-		t.Log(op)
+	ap := &AsmParser{}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			mc := &Machine{}
+
+			ap.Reset(test.source)
+
+			assert.Equal(t, nil, ap.parseNumber(mc))
+			assert.Equal(t, test.expect, mc.data)
+		})
 	}
 }
 
-func BenchmarkAsmParserParseOpcode(b *testing.B) {
-	ap := &AsmParser{
-		src: "	:D:IEM:LEG",
+func TestAsmParserParse(t *testing.T) {
+	test := struct {
+		source string
+		expect *Machine
+	}{
+		source: `	+b1010 +d643 +o746
+	:V:E
+	:D
+	+b10111
+	:S:I
+	:V:I`,
+		expect: &Machine{
+			code: []Opcode{VJ | EF, DJ, SJ | IF, VJ | IF},
+			data: []Word{0b1010, 643, 0746, 0b10111},
+		},
 	}
 
-	for i := 0; i < b.N; i++ {
-		ap.Reset(ap.src)
-		ap.parseOpcode()
-	}
+	ap := &AsmParser{}
+	ap.Reset(test.source)
+
+	mc := &Machine{}
+
+	assert.Equal(t, nil, ap.Parse(mc))
+	assert.Equal(t, test.expect, mc)
 }
