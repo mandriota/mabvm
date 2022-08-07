@@ -33,7 +33,6 @@ func TestMachineRun(t *testing.T) {
 					[]Code{VJ | EF},
 					[]Word{2, 3},
 				)
-				m.vtab = []*Status{&m.Stat}
 				return m
 			},
 			expt: []Word{2, 5},
@@ -46,7 +45,6 @@ func TestMachineRun(t *testing.T) {
 					[]Code{VJ | IF | EF},
 					[]Word{2, 3},
 				)
-				m.vtab = []*Status{&m.Stat}
 				return m
 			},
 			expt: []Word{2, -1},
@@ -59,7 +57,6 @@ func TestMachineRun(t *testing.T) {
 					[]Code{DJ | IF, VJ, DJ | IF, VJ | IF},
 					[]Word{0, 7},
 				)
-				m.vtab = []*Status{&m.Stat}
 				return m
 			},
 			expt: []Word{7, 7},
@@ -81,7 +78,6 @@ func BenchmarkMachineRun(b *testing.B) {
 	mac.Init(
 		[]Code{DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ},
 		[]Word{0, 123})
-	mac.vtab = []*Status{&mac.Stat}
 
 	for i := 0; i < b.N; i++ {
 		mac.Run()

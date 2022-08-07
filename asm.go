@@ -46,7 +46,6 @@ func (ap *AsmParser) Parse(mac *Machine) error {
 	if mac == nil {
 		mac = &Machine{}
 		mac.Init(make([]byte, 0, 1<<16), make([]int64, 0, 1<<13))
-		mac.vtab = []*Status{&mac.Stat, &mac.Stat}
 	}
 
 	for {
