@@ -93,9 +93,8 @@ func (m *Machine) Run() {
 			}
 		}
 
-		if op&IF == IF {
-			cx *= -1
-		}
+		// change cx sign if IF is setted
+		cx -= int64(op) & IF >> 1 * cx
 
 		switch op & JMask {
 		case SJ:

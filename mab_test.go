@@ -65,3 +65,18 @@ func TestMachineRun(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkMachineRun(b *testing.B) {
+	mac := NewMachine(
+		[]Opcode{
+			DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ,
+		},
+		[]Word{0, 123})
+
+	for i := 0; i < b.N; i++ {
+		mac.Run()
+		mac.srcP = int64(len(mac.data)) - 1
+		mac.dstP = mac.srcP
+		mac.codP = 0
+	}
+}
