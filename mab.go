@@ -88,11 +88,15 @@ func (mac *Machine) Run() {
 			continue
 		}
 
-		if op&MF == MF && mac.TryLock() {
-			mac.Lock()
+		if op&MF == MF {
+			switch {
+			case mac.TryLock():
+				mac.Lock()
+			default:
+				mac.Unlock()
+			}
 		}
 
-		// change cc sign if IF is setted
 		cc -= int64(op) & IF >> 1 * cc
 
 		switch op & JMask {
