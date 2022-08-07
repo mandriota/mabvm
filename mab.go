@@ -72,18 +72,17 @@ func (m *Machine) Dump(dst []byte) []byte {
 func (m *Machine) Run() {
 	for m.codP = 0; m.codP < Word(len(m.code)); m.codP++ {
 		op := m.code[m.codP]
-		cx := Word(1)
+		cc := Word(1)
 
 		if op&EF == EF {
-			cx = atomic.LoadInt64(&m.data[m.srcP])
+			cc = atomic.LoadInt64(&m.data[m.srcP])
 			m.srcP--
 		}
 
 		srcD := atomic.LoadInt64(&m.data[m.srcP])
 		dstD := atomic.LoadInt64(&m.data[m.dstP])
 
-		// int64(op>>7)*srcD < dstD || int64(op>>6)*srcD == dstD || int64(op>>5)*srcD > dstD
-		if !(((op&EC == 0) || (srcD == dstD)) && ((op&GC == 0) || (srcD > dstD)) && ((op&LC == 0) || (srcD < dstD))) {
+		if int64(op)&GC>>7*srcD >= dstD && int64(op)&EC>>6*srcD != dstD && int64(op)&LC>>5*srcD <= dstD {
 			continue
 		}
 
@@ -94,17 +93,17 @@ func (m *Machine) Run() {
 		}
 
 		// change cx sign if IF is setted
-		cx -= int64(op) & IF >> 1 * cx
+		cc -= int64(op) & IF >> 1 * cc
 
 		switch op & JMask {
 		case SJ:
-			m.srcP += cx
+			m.srcP += cc
 		case DJ:
-			m.dstP += cx
+			m.dstP += cc
 		case CJ:
-			m.codP += cx
+			m.codP += cc
 		case VJ:
-			atomic.StoreInt64(&m.data[m.dstP], srcD+cx)
+			atomic.StoreInt64(&m.data[m.dstP], srcD+cc)
 			m.srcP--
 			m.dstP++
 		}
