@@ -23,17 +23,17 @@ func TestAsmParser_parseOpcode(t *testing.T) {
 	tests := []struct {
 		name   string
 		source string
-		expect []Opcode
+		expect []Code
 	}{
 		{
 			name:   "maximal case",
 			source: ":D:IEM:LEG",
-			expect: []Opcode{DJ | IF | EF | MF | LC | EC | GC},
+			expect: []Code{DJ | IF | EF | MF | LC | EC | GC},
 		},
 		{
 			name:   "minimal case",
 			source: ":V",
-			expect: []Opcode{VJ},
+			expect: []Code{VJ},
 		},
 	}
 
@@ -130,7 +130,7 @@ func TestAsmParserParse(t *testing.T) {
 	:S:I
 	:V:I`,
 		expect: &Machine{
-			code: []Opcode{VJ | EF, DJ, SJ | IF, VJ | IF},
+			code: []Code{VJ | EF, DJ, SJ | IF, VJ | IF},
 			data: []Word{0b1010, 643, 0746, 0b10111},
 		},
 	}

@@ -22,37 +22,46 @@ import (
 func TestMachineRun(t *testing.T) {
 	tests := []struct {
 		name string
-		init *Machine
+		init func() *Machine
 		expt []Word
 	}{
 		{
 			name: "incriment number",
-			init: NewMachine(
-				[]byte{
-					VJ | EF,
-				},
-				[]Word{2, 3},
-			),
+			init: func() *Machine {
+				m := &Machine{}
+				m.Init(
+					[]Code{VJ | EF},
+					[]Word{2, 3},
+				)
+				m.vtab = []*Status{&m.Stat}
+				return m
+			},
 			expt: []Word{2, 5},
 		},
 		{
 			name: "decriment number",
-			init: NewMachine(
-				[]byte{
-					VJ | IF | EF,
-				},
-				[]Word{2, 3},
-			),
+			init: func() *Machine {
+				m := &Machine{}
+				m.Init(
+					[]Code{VJ | IF | EF},
+					[]Word{2, 3},
+				)
+				m.vtab = []*Status{&m.Stat}
+				return m
+			},
 			expt: []Word{2, -1},
 		},
 		{
 			name: "copy data",
-			init: NewMachine(
-				[]byte{
-					DJ | IF, VJ, DJ | IF, VJ | IF,
-				},
-				[]Word{0, 7},
-			),
+			init: func() *Machine {
+				m := &Machine{}
+				m.Init(
+					[]Code{DJ | IF, VJ, DJ | IF, VJ | IF},
+					[]Word{0, 7},
+				)
+				m.vtab = []*Status{&m.Stat}
+				return m
+			},
 			expt: []Word{7, 7},
 		},
 	}
@@ -60,18 +69,19 @@ func TestMachineRun(t *testing.T) {
 	t.Parallel()
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			test.init.Run()
-			assert.Equal(t, test.expt, test.init.data, "it's so bad ...")
+			mac := test.init()
+			mac.Run()
+			assert.Equal(t, test.expt, mac.data, "it's so bad ...")
 		})
 	}
 }
 
 func BenchmarkMachineRun(b *testing.B) {
-	mac := NewMachine(
-		[]Opcode{
-			DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ,
-		},
+	mac := &Machine{}
+	mac.Init(
+		[]Code{DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ},
 		[]Word{0, 123})
+	mac.vtab = []*Status{&mac.Stat}
 
 	for i := 0; i < b.N; i++ {
 		mac.Run()

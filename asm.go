@@ -44,7 +44,9 @@ func (ap *AsmParser) peekByte() byte {
 
 func (ap *AsmParser) Parse(mac *Machine) error {
 	if mac == nil {
-		mac = NewMachine(make([]byte, 0, 1<<16), make([]int64, 0, 1<<13))
+		mac = &Machine{}
+		mac.Init(make([]byte, 0, 1<<16), make([]int64, 0, 1<<13))
+		mac.vtab = []*Status{&mac.Stat, &mac.Stat}
 	}
 
 	for {
@@ -110,7 +112,7 @@ func (ap *AsmParser) parseOpcode(mac *Machine) (err error) {
 
 	ap.readByte()
 
-	op := Opcode(0)
+	op := Code(0)
 
 	switch ap.peekByte() {
 	case 'S':
@@ -159,7 +161,7 @@ yield:
 	return nil
 }
 
-func (ap *AsmParser) testFlag(name byte, code Opcode) Opcode {
+func (ap *AsmParser) testFlag(name byte, code Code) Code {
 	if ap.peekByte() == name {
 		ap.readByte()
 		return code
