@@ -20,7 +20,7 @@ import (
 	"sync/atomic"
 )
 
-const VMBSize = 1 << 12
+const BlockSize = 1 << 12
 
 type Code = byte
 
@@ -36,17 +36,20 @@ type Machine struct {
 	code []Code
 	data []Word
 
-	vtab []*sync.Mutex
+	mtab []*sync.Mutex
 
 	// TODO: add debug mode
 }
 
-func (mac *Machine) Init(code []Code, data []Word) {
+func (mac *Machine) Init(code []Code, data []Word, mtab []*sync.Mutex) {
 	mac.srcP = Word(len(data)) - 1
 	mac.dstP = Word(len(data)) - 1
 	mac.code = code
 	mac.data = data
-	mac.vtab = make([]*sync.Mutex, len(data)/VMBSize+1)
+
+	if mac.mtab = mtab; mac.mtab == nil {
+		mac.mtab = make([]*sync.Mutex, len(data)/BlockSize+1)
+	}
 }
 
 func (mac *Machine) Dump(dst []byte) []byte {
@@ -89,10 +92,9 @@ func (mac *Machine) Run() {
 		}
 
 		if op&MF == MF {
-			switch {
-			case mac.TryLock():
+			if mac.TryLock() {
 				mac.Lock()
-			default:
+			} else {
 				mac.Unlock()
 			}
 		}
@@ -111,7 +113,7 @@ func (mac *Machine) Run() {
 			mac.srcP--
 			mac.dstP++
 
-			if m := mac.vtab[mac.dstP/VMBSize]; m != nil && m != &mac.Mutex && !m.TryLock() {
+			if m := mac.mtab[mac.dstP/BlockSize]; m != nil && m != &mac.Mutex && !m.TryLock() {
 				m.Unlock()
 			}
 		}

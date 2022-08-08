@@ -32,6 +32,7 @@ func TestMachineRun(t *testing.T) {
 				m.Init(
 					[]Code{VJ | EF},
 					[]Word{2, 3},
+					nil,
 				)
 				return m
 			},
@@ -44,6 +45,7 @@ func TestMachineRun(t *testing.T) {
 				m.Init(
 					[]Code{VJ | IF | EF},
 					[]Word{2, 3},
+					nil,
 				)
 				return m
 			},
@@ -56,6 +58,7 @@ func TestMachineRun(t *testing.T) {
 				m.Init(
 					[]Code{DJ | IF, VJ, DJ | IF, VJ | IF},
 					[]Word{0, 7},
+					nil,
 				)
 				return m
 			},
@@ -77,7 +80,8 @@ func BenchmarkMachineRun(b *testing.B) {
 	mac := &Machine{}
 	mac.Init(
 		[]Code{DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ},
-		[]Word{0, 123})
+		[]Word{0, 123},
+		nil)
 
 	for i := 0; i < b.N; i++ {
 		mac.Run()
