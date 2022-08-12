@@ -46,18 +46,19 @@ func (mac *Machine) Init(code []Code, data []Word, mtab []*sync.Mutex) {
 	mac.dstP = Word(len(data)) - 1
 	mac.code = code
 	mac.data = data
+	mac.mtab = mtab
 
-	if mac.mtab = mtab; mac.mtab == nil {
-		mac.mtab = make([]*sync.Mutex, len(data)/BlockSize+1)
-	}
+	mac.Bind(&mac.Mutex, len(mac.data)>>12-len(mac.mtab)+1)
 }
 
-func (mac *Machine) Bind(m *sync.Mutex, s int) {
-	mac.data = append(mac.data, make([]Word, 1<<12*s)...)
+func (mac *Machine) Bind(m *sync.Mutex, s int) []*sync.Mutex {
+	mac.mtab = append(mac.mtab, make([]*sync.Mutex, s)...)
 
-	for i := 0; i < s; i++ {
-		mac.mtab = append(mac.mtab, m)
+	for i := range mac.mtab {
+		mac.mtab[i] = m
 	}
+
+	return mac.mtab
 }
 
 func (mac *Machine) Dump(dst []byte) []byte {
