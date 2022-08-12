@@ -52,6 +52,14 @@ func (mac *Machine) Init(code []Code, data []Word, mtab []*sync.Mutex) {
 	}
 }
 
+func (mac *Machine) Bind(m *sync.Mutex, s int) {
+	mac.data = append(mac.data, make([]Word, 1<<12*s)...)
+
+	for i := 0; i < s; i++ {
+		mac.mtab = append(mac.mtab, m)
+	}
+}
+
 func (mac *Machine) Dump(dst []byte) []byte {
 	b := bytes.NewBuffer(dst)
 
@@ -77,6 +85,15 @@ func (mac *Machine) Dump(dst []byte) []byte {
 func (mac *Machine) Run() {
 	for mac.codP = 0; mac.codP < Word(len(mac.code)); mac.codP++ {
 		op := mac.code[mac.codP]
+
+		if op&MF == MF {
+			if mac.TryLock() {
+				mac.Lock()
+			} else {
+				mac.Unlock()
+			}
+		}
+
 		cc := Word(1)
 
 		if op&EF == EF {
@@ -89,14 +106,6 @@ func (mac *Machine) Run() {
 
 		if int64(op)&GC>>7*srcD >= dstD && int64(op)&EC>>6*srcD != dstD && int64(op)&LC>>5*srcD <= dstD {
 			continue
-		}
-
-		if op&MF == MF {
-			if mac.TryLock() {
-				mac.Lock()
-			} else {
-				mac.Unlock()
-			}
 		}
 
 		cc -= int64(op) & IF >> 1 * cc
