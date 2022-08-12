@@ -51,14 +51,12 @@ func (mac *Machine) Init(code []Code, data []Word, mtab []*sync.Mutex) {
 	mac.Bind(&mac.Mutex, len(mac.data)>>12-len(mac.mtab)+1)
 }
 
-func (mac *Machine) Bind(m *sync.Mutex, s int) []*sync.Mutex {
+func (mac *Machine) Bind(m *sync.Mutex, s int) {
 	mac.mtab = append(mac.mtab, make([]*sync.Mutex, s)...)
 
 	for i := range mac.mtab {
 		mac.mtab[i] = m
 	}
-
-	return mac.mtab
 }
 
 func (mac *Machine) Dump(dst []byte) []byte {
