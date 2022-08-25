@@ -1,5 +1,5 @@
 # Mab Virtual Machine
-**Esoteric Stack Language Reduced Instruction Set Virtual Machine**
+**Esoteric Stack Language Virtual Machine**
 ```text
                         . _______      . _________
      . _____      . _____.|     |      |.|       |__________________________
