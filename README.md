@@ -1,6 +1,9 @@
 # Mab Virtual Machine
 **Esoteric Stack Language Reduced Instruction Set Virtual Machine**
 
+```txt:logo.txt [2-8]
+```
+
 ## Memory Model
 
 ## Opcode Model
