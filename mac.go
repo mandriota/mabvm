@@ -20,6 +20,10 @@ import (
 	"sync/atomic"
 )
 
+type Binder interface {
+	Bind(m *sync.Mutex, blocks int)
+}
+
 const BlockSize = 1 << 12
 
 type Code = byte
@@ -55,8 +59,8 @@ func NewMachine(code []Code, data []Word, mtab []*sync.Mutex) *Machine {
 	return mac
 }
 
-func (mac *Machine) Bind(m *sync.Mutex, s int) {
-	mac.mtab = append(mac.mtab, make([]*sync.Mutex, s)...)
+func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
+	mac.mtab = append(mac.mtab, make([]*sync.Mutex, blocks)...)
 
 	for i := range mac.mtab {
 		mac.mtab[i] = m
