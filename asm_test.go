@@ -1,16 +1,16 @@
-//	Copyright 2022 Mark Mandriota
+// Copyright 2022 Mark Mandriota
 //
-//	Licensed under the Apache License, Version 2.0 (the "License");
-//	you may not use this file except in compliance with the License.
-//	You may obtain a copy of the License at
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-//		http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
-//	Unless required by applicable law or agreed to in writing, software
-//	distributed under the License is distributed on an "AS IS" BASIS,
-//	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//	See the License for the specific language governing permissions and
-//	limitations under the License.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package mabvm
 
 import (
@@ -37,13 +37,11 @@ func TestAsmParser_parseOpcode(t *testing.T) {
 		},
 	}
 
-	ap := &AsmParser{}
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mc := &Machine{}
 
-			ap.Reset(test.source)
+			ap := NewAsmParser(test.source)
 
 			assert.Equal(t, nil, ap.parseOpcode(mc))
 			assert.Equal(t, test.expect, mc.code)
@@ -104,13 +102,11 @@ func TestAsmParser_parseNumber(t *testing.T) {
 		},
 	}
 
-	ap := &AsmParser{}
-
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mc := &Machine{}
 
-			ap.Reset(test.source)
+			ap := NewAsmParser(test.source)
 
 			assert.Equal(t, nil, ap.parseNumber(mc))
 			assert.Equal(t, test.expect, mc.data)
@@ -135,11 +131,23 @@ func TestAsmParserParse(t *testing.T) {
 		},
 	}
 
-	ap := &AsmParser{}
-	ap.Reset(test.source)
+	ap := NewAsmParser(test.source)
 
 	mc := &Machine{}
 
 	assert.Equal(t, nil, ap.Parse(mc))
 	assert.Equal(t, test.expect, mc)
+}
+
+func BenchmarkAsmParserParse(b *testing.B) {
+	src := `:D:I :V :S :D:I :V:I :S :D`
+
+	ap := NewAsmParser(src)
+	mc := &Machine{}
+
+	for i := 0; i < b.N; i++ {
+		ap.src = src
+		ap.pos = 0
+		ap.Parse(mc)
+	}
 }
