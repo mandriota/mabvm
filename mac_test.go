@@ -67,7 +67,7 @@ func TestMachineRun(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			mac := test.init()
-			mac.Run()
+			mac.Show()
 			assert.Equal(t, test.expt, mac.data, "it's so bad ...")
 		})
 	}
@@ -81,7 +81,7 @@ func BenchmarkMachineRun(b *testing.B) {
 	)
 
 	for i := 0; i < b.N; i++ {
-		mac.Run()
+		mac.Show()
 		mac.srcP = int64(len(mac.data)) - 1
 		mac.dstP = mac.srcP
 		mac.codP = 0

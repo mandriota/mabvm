@@ -1,54 +1,56 @@
 package mabvm
 
 import (
+	_ "embed"
 	"io"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 )
 
+// Writer - basic buffered writer interface.
+// If last memory byte is 1 then flushes
+// all memory without last bit to output.
 type Writer struct {
 	sync.Mutex
 
 	w io.Writer
 
-	rdata []byte
-	ldata []byte
+	wmem []Word
+	bmem []byte
 }
 
 func NewWriter(w io.Writer, d []Word) *Writer {
-	writer := &Writer{
-		w: w,
-		rdata: unsafe.Slice(
+	return &Writer{
+		w:    w,
+		wmem: d,
+		bmem: unsafe.Slice(
 			(*byte)(unsafe.Pointer(&d[0])),
 			uintptr(len(d))*unsafe.Sizeof(d[0]),
 		),
 	}
-	writer.ldata = make([]byte, len(writer.rdata))
-	return writer
 }
 
 func (w *Writer) Blocks() int {
-	return len(w.rdata)*int(unsafe.Sizeof(Word(0)))/BlockSize + 1
+	return (len(w.wmem) + 1) / BlockSize
 }
 
-func (w *Writer) Run() error {
+func (w *Writer) Show() error {
 	for {
 		if w.TryLock() {
-			copy(w.ldata, w.rdata)
 			w.Lock()
 		} else {
 			w.Unlock()
 		}
 
-		j := 0
+		if atomic.CompareAndSwapInt64(&w.wmem[len(w.wmem)-1], 1, 0) {
+			if _, err := w.w.Write(w.bmem[:len(w.bmem)-8]); err != nil {
+				return err
+			}
 
-		for i, el := range w.rdata {
-			if el != w.ldata[i] {
-				w.ldata[j] = el
-				j++
+			for i := range w.wmem {
+				w.wmem[i] = 0
 			}
 		}
-
-		w.w.Write(w.ldata[:j])
 	}
 }

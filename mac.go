@@ -62,7 +62,7 @@ func NewMachine(code []Code, data []Word, mtab []*sync.Mutex) *Machine {
 func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
 	mac.mtab = append(mac.mtab, make([]*sync.Mutex, blocks)...)
 
-	for i := range mac.mtab {
+	for i := range mac.mtab[len(mac.mtab)-blocks:] {
 		mac.mtab[i] = m
 	}
 }
@@ -89,7 +89,7 @@ func (mac *Machine) Dump(dst []byte) []byte {
 	return b.Bytes()
 }
 
-func (mac *Machine) Run() {
+func (mac *Machine) Show() {
 	for mac.codP = 0; mac.codP < Word(len(mac.code)); mac.codP++ {
 		op := mac.code[mac.codP]
 
@@ -129,7 +129,7 @@ func (mac *Machine) Run() {
 			mac.srcP--
 			mac.dstP++
 
-			if m := mac.mtab[mac.dstP/BlockSize]; m != nil && m != &mac.Mutex && !m.TryLock() {
+			if m := mac.mtab[mac.dstP/BlockSize-1]; m != nil && m != &mac.Mutex && !m.TryLock() {
 				m.Unlock()
 			}
 		}
