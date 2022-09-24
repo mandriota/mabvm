@@ -35,25 +35,25 @@ func TestMachineRun(t *testing.T) {
 				)
 				return m
 			},
-			expt: []Word{2, 5},
+			expt: []Word{5, 3},
 		},
 		{
 			name: "decriment number",
 			init: func() *Machine {
 				m := NewMachine(
 					[]Code{VJ | IF | EF},
-					[]Word{2, 3},
+					[]Word{3, 2},
 					nil,
 				)
 				return m
 			},
-			expt: []Word{2, -1},
+			expt: []Word{1, 2},
 		},
 		{
 			name: "copy data",
 			init: func() *Machine {
 				m := NewMachine(
-					[]Code{DJ | IF, VJ, DJ | IF, VJ | IF},
+					[]Code{VJ | EF},
 					[]Word{0, 7},
 					nil,
 				)
@@ -75,15 +75,13 @@ func TestMachineRun(t *testing.T) {
 
 func BenchmarkMachineRun(b *testing.B) {
 	mac := NewMachine(
-		[]Code{DJ | IF, VJ, SJ, DJ | IF, VJ | IF, SJ, DJ},
+		[]Code{VJ, DJ | IF, SJ, VJ, DJ | IF, SJ, VJ, DJ | IF, SJ, VJ, DJ | IF, SJ},
 		[]Word{0, 123},
 		nil,
 	)
 
 	for i := 0; i < b.N; i++ {
 		mac.Show()
-		mac.srcP = int64(len(mac.data)) - 1
-		mac.dstP = mac.srcP
 		mac.codP = 0
 	}
 }

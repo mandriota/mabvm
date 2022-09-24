@@ -48,7 +48,6 @@ type Machine struct {
 func NewMachine(code []Code, data []Word, mtab []*sync.Mutex) *Machine {
 	mac := &Machine{
 		srcP: Word(len(data)) - 1,
-		dstP: Word(len(data)) - 1,
 		code: code,
 		data: data,
 		mtab: mtab,
@@ -129,7 +128,7 @@ func (mac *Machine) Show() {
 			mac.srcP--
 			mac.dstP++
 
-			if m := mac.mtab[mac.dstP/BlockSize-1]; m != nil && m != &mac.Mutex && !m.TryLock() {
+			if m := mac.mtab[mac.dstP/BlockSize]; m != nil && m != &mac.Mutex && !m.TryLock() {
 				m.Unlock()
 			}
 		}

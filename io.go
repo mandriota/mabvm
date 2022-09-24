@@ -20,6 +20,8 @@ type Writer struct {
 	bmem []byte
 }
 
+// TODO: add flusher interface instead of writer
+
 func NewWriter(w io.Writer, d []Word) *Writer {
 	return &Writer{
 		w:    w,

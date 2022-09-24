@@ -14,13 +14,13 @@ func TestWriterRun(t *testing.T) {
 	textW := *(*Word)(unsafe.Pointer(&textB))
 
 	mac := NewMachine(
-		[]Code{DJ | IF, SJ | IF | EF, VJ | EF, VJ},
-		append(append([]Word{0, textW}, make([]Word, BlockSize*2-3)...), 8188),
+		[]Code{VJ, DJ | EF, VJ},
+		append(make([]Word, 8190), 4094, textW-1),
 		nil,
 	)
 
 	buf := bytes.NewBuffer(nil)
-	wrt := NewWriter(buf, mac.data[4096:])
+	wrt := NewWriter(buf, mac.data[:4096])
 	go wrt.Show()
 
 	mac.Bind(&wrt.Mutex, wrt.Blocks())
@@ -32,7 +32,7 @@ func TestWriterRun(t *testing.T) {
 
 	assert.Equal(
 		t,
-		append(make([]byte, 1<<15-16), textB[:]...),
+		append(textB[:], make([]byte, 1<<15-16)...),
 		buf.Bytes(),
 	)
 }
