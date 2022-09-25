@@ -1,4 +1,4 @@
-module github.com/MarkMandriota/MabVM
+module github.com/mandriota/mabvm
 
 go 1.19
 
