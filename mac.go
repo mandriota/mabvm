@@ -69,7 +69,7 @@ func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
 func (mac *Machine) Dump(w *bufio.Writer) {
 	w.WriteString("\n====================")
 
-	c := mac.code[mac.codP]
+	c := mac.code[mac.codP-1]
 
 	switch c & JMask {
 	case SJ:
@@ -128,8 +128,6 @@ func (mac *Machine) Dump(w *bufio.Writer) {
 }
 
 func (mac *Machine) Tick() {
-	mac.codP++
-
 	op := mac.code[mac.codP]
 
 	if op&MF == MF {
@@ -175,12 +173,14 @@ func (mac *Machine) Tick() {
 			m.Unlock()
 		}
 	}
+
+	mac.codP++
 }
 
 func (mac *Machine) Show() {
-	mac.codP = -1
+	mac.codP = 0
 
-	for mac.codP+1 < Word(len(mac.code)) {
+	for mac.codP < Word(len(mac.code)) {
 		mac.Tick()
 	}
 }
@@ -189,11 +189,11 @@ func (mac *Machine) DebugShow(dw io.Writer) {
 	w := bufio.NewWriter(dw)
 	defer w.Flush()
 
+	mac.codP = 1
 	mac.Dump(w)
+	mac.codP = 0
 
-	mac.codP = -1
-
-	for mac.codP+1 < Word(len(mac.code)) {
+	for mac.codP < Word(len(mac.code)) {
 		mac.Tick()
 		mac.Dump(w)
 	}
