@@ -72,6 +72,11 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			expect: []Word{9},
 		},
 		{
+			name:   "one hex digit",
+			source: "+hB",
+			expect: []Word{0xB},
+		},
+		{
 			name:   "positive binary number",
 			source: "+b101010010001111011011",
 			expect: []Word{0b101010010001111011011},
@@ -87,6 +92,11 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			expect: []Word{4993509343295043294},
 		},
 		{
+			name:   "positive hex number",
+			source: "+h391AFE38F9C2DBAA",
+			expect: []Word{0x391AFE38F9C2DBAA},
+		},
+		{
 			name:   "negative binary number",
 			source: "-b1011101010010010010101011110",
 			expect: []Word{-0b1011101010010010010101011110},
@@ -100,6 +110,11 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			name:   "negative decimal number",
 			source: "-d3928419499493694382",
 			expect: []Word{-3928419499493694382},
+		},
+		{
+			name:   "negative hex number",
+			source: "-hAF483A34FE49BC2",
+			expect: []Word{-0xAF483A34FE49BC2},
 		},
 	}
 
@@ -141,7 +156,7 @@ func TestAsmParserParse(t *testing.T) {
 }
 
 func BenchmarkAsmParserParse(b *testing.B) {
-	src := `:D:I :V :S :D:I :V:I :S :D`
+	src := `+d484932984 :D:I :V :S :D:I :V:I :S :D`
 
 	ap := NewAsmParser(src)
 	mc := &Machine{}
