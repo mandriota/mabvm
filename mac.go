@@ -16,7 +16,7 @@ package mabvm
 
 import (
 	"bufio"
-	"os"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -185,8 +185,8 @@ func (mac *Machine) Show() {
 	}
 }
 
-func (mac *Machine) DebugShow() {
-	w := bufio.NewWriter(os.Stdout)
+func (mac *Machine) DebugShow(dw io.Writer) {
+	w := bufio.NewWriter(dw)
 	defer w.Flush()
 
 	mac.Dump(w)
