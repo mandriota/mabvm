@@ -41,7 +41,7 @@ func TestWriterRun(t *testing.T) {
 	mac.Show()
 
 	// wait for writer
-	runtime.GOMAXPROCS(runtime.NumGoroutine())
+	runtime.GOMAXPROCS(runtime.NumGoroutine() + 1)
 	runtime.Gosched()
 
 	assert.Equal(
