@@ -18,6 +18,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"unsafe"
 )
 
 type AsmParser struct {
@@ -129,6 +130,8 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 		base = 8
 	case 'd':
 		base = 10
+	case 'h':
+		base = 16
 	case '\x00':
 		return ap.buildError("EOF", "base")
 	default:
@@ -137,9 +140,18 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 
 	ap.readByte()
 
-	for c := ap.peekByte(); c >= '0' && c < '0'+byte(base); c = ap.peekByte() {
+	for {
+		cc := ap.peekByte()
+
+		dec := boolToByte(cc >= '0' && cc <= '9')
+		hex := boolToByte(cc >= 'A' && cc <= 'Z')
+		if dec+hex == 0 {
+			break
+		}
+
 		word *= base
-		word += int64(c - '0')
+		word += int64(cc - '0'*dec - '7'*hex)
+
 		ap.readByte()
 	}
 
@@ -184,8 +196,13 @@ func (ap *AsmParser) buildError(unexpect, expect string) error {
 		": " + expect + " expected")
 }
 
+func boolToByte(b bool) byte {
+	return *(*byte)(unsafe.Pointer(&b))
+}
+
 func isVoid(b byte) bool {
-	return b == '\x00' || b == ' ' || b == '\n' || b == '\r' || b == '\t' || b == '\v'
+	return b == '\x00' || b == ' ' || b == '\n' ||
+		b == '\r' || b == '\t' || b == '\v'
 }
 
 func isSpec(b byte) bool {
