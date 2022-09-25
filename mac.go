@@ -16,7 +16,6 @@ package mabvm
 
 import (
 	"bufio"
-	"bytes"
 	"os"
 	"strconv"
 	"sync"
@@ -67,68 +66,65 @@ func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
 	}
 }
 
-func (mac *Machine) Dump(dst []byte) []byte {
-	b := bytes.NewBuffer(dst)
-	b.WriteString("\n====================")
+func (mac *Machine) Dump(w *bufio.Writer) {
+	w.WriteString("\n====================")
 
 	c := mac.code[mac.codP]
 
 	switch c & JMask {
 	case SJ:
-		b.WriteString("\nSource Jump (SJ)")
+		w.WriteString("\nSource Jump (SJ)")
 	case DJ:
-		b.WriteString("\nDestination Jump (DJ)")
+		w.WriteString("\nDestination Jump (DJ)")
 	case CJ:
-		b.WriteString("\nCode Jump (CJ)")
+		w.WriteString("\nCode Jump (CJ)")
 	case VJ:
-		b.WriteString("\nValue Jump (VJ)")
+		w.WriteString("\nValue Jump (VJ)")
 	}
 
-	b.WriteString("\nFlags:")
+	w.WriteString("\nFlags:")
 
 	if c&IF == IF {
-		b.WriteString("\n\tIF")
+		w.WriteString("\n\tIF")
 	}
 
 	if c&EF == EF {
-		b.WriteString("\n\tEF")
+		w.WriteString("\n\tEF")
 	}
 
 	if c&MF == MF {
-		b.WriteString("\n\tMF")
+		w.WriteString("\n\tMF")
 	}
 
 	if c&LC == LC {
-		b.WriteString("\n\tLC")
+		w.WriteString("\n\tLC")
 	}
 
 	if c&EC == EC {
-		b.WriteString("\n\tEC")
+		w.WriteString("\n\tEC")
 	}
 
 	if c&GC == GC {
-		b.WriteString("\n\tGC")
+		w.WriteString("\n\tGC")
 	}
 
-	b.WriteString("\ncodP: ")
-	b.WriteString(strconv.FormatInt(mac.codP, 16))
-	b.WriteString("\nsrcP: ")
-	b.WriteString(strconv.FormatInt(mac.srcP, 16))
-	b.WriteString("\ndstP: ")
-	b.WriteString(strconv.FormatInt(mac.dstP, 16))
+	w.WriteString("\ncodP: ")
+	w.WriteString(strconv.FormatInt(mac.codP, 16))
+	w.WriteString("\nsrcP: ")
+	w.WriteString(strconv.FormatInt(mac.srcP, 16))
+	w.WriteString("\ndstP: ")
+	w.WriteString(strconv.FormatInt(mac.dstP, 16))
 
-	b.WriteString("\ndata:")
+	w.WriteString("\ndata:")
 
 	for i, el := range mac.data {
-		b.WriteString("\n\tword[")
-		b.WriteString(strconv.FormatInt(int64(i), 16))
-		b.WriteString("]: ")
-		b.WriteString(strconv.FormatInt(el, 16))
+		w.WriteString("\n\tword[")
+		w.WriteString(strconv.FormatInt(int64(i), 16))
+		w.WriteString("]: ")
+		w.WriteString(strconv.FormatInt(el, 16))
 	}
 
-	b.WriteString("\n====================\n")
-
-	return b.Bytes()
+	w.WriteString("\n====================\n")
 }
 
 func (mac *Machine) Tick() {
@@ -190,22 +186,15 @@ func (mac *Machine) Show() {
 }
 
 func (mac *Machine) DebugShow() {
-	buf := make([]byte, 0, 4096)
-
 	w := bufio.NewWriter(os.Stdout)
+	defer w.Flush()
 
-	buf = mac.Dump(buf)
-	w.Write(buf)
-	buf = buf[:0]
+	mac.Dump(w)
 
 	mac.codP = -1
 
 	for mac.codP+1 < Word(len(mac.code)) {
 		mac.Tick()
-		buf = mac.Dump(buf)
-		w.Write(buf)
-		buf = buf[:0]
+		mac.Dump(w)
 	}
-
-	w.Flush()
 }
