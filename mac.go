@@ -15,7 +15,9 @@
 package mabvm
 
 import (
+	"bufio"
 	"bytes"
+	"os"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -42,8 +44,6 @@ type Machine struct {
 	data []Word
 
 	mtab []*sync.Mutex
-
-	// TODO: add debug mode
 }
 
 func NewMachine(code []Code, data []Word, mtab []*sync.Mutex) *Machine {
@@ -69,69 +69,143 @@ func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
 
 func (mac *Machine) Dump(dst []byte) []byte {
 	b := bytes.NewBuffer(dst)
+	b.WriteString("\n====================")
 
-	b.WriteString("codP=")
+	c := mac.code[mac.codP]
+
+	switch c & JMask {
+	case SJ:
+		b.WriteString("\nSource Jump (SJ)")
+	case DJ:
+		b.WriteString("\nDestination Jump (DJ)")
+	case CJ:
+		b.WriteString("\nCode Jump (CJ)")
+	case VJ:
+		b.WriteString("\nValue Jump (VJ)")
+	}
+
+	b.WriteString("\nFlags:")
+
+	if c&IF == IF {
+		b.WriteString("\n\tIF")
+	}
+
+	if c&EF == EF {
+		b.WriteString("\n\tEF")
+	}
+
+	if c&MF == MF {
+		b.WriteString("\n\tMF")
+	}
+
+	if c&LC == LC {
+		b.WriteString("\n\tLC")
+	}
+
+	if c&EC == EC {
+		b.WriteString("\n\tEC")
+	}
+
+	if c&GC == GC {
+		b.WriteString("\n\tGC")
+	}
+
+	b.WriteString("\ncodP: ")
 	b.WriteString(strconv.FormatInt(mac.codP, 16))
-	b.WriteString("\nsrcP=")
+	b.WriteString("\nsrcP: ")
 	b.WriteString(strconv.FormatInt(mac.srcP, 16))
-	b.WriteString("\ndstP=")
+	b.WriteString("\ndstP: ")
 	b.WriteString(strconv.FormatInt(mac.dstP, 16))
 
+	b.WriteString("\ndata:")
+
 	for i, el := range mac.data {
-		b.WriteString("\ndata[")
+		b.WriteString("\n\tword[")
 		b.WriteString(strconv.FormatInt(int64(i), 16))
-		b.WriteString("]=")
+		b.WriteString("]: ")
 		b.WriteString(strconv.FormatInt(el, 16))
 	}
 
-	b.WriteByte('\n')
+	b.WriteString("\n====================\n")
 
 	return b.Bytes()
 }
 
-func (mac *Machine) Show() {
-	for mac.codP = 0; mac.codP < Word(len(mac.code)); mac.codP++ {
-		op := mac.code[mac.codP]
+func (mac *Machine) Tick() {
+	mac.codP++
 
-		if op&MF == MF {
-			if mac.TryLock() {
-				mac.Lock()
-			} else {
-				mac.Unlock()
-			}
-		}
+	op := mac.code[mac.codP]
 
-		cc := Word(1)
-
-		if op&EF == EF {
-			cc = atomic.LoadInt64(&mac.data[mac.srcP])
-			mac.srcP--
-		}
-
-		srcD := atomic.LoadInt64(&mac.data[mac.srcP])
-		dstD := atomic.LoadInt64(&mac.data[mac.dstP])
-
-		if int64(op)&GC>>7*srcD >= dstD && int64(op)&EC>>6*srcD != dstD && int64(op)&LC>>5*srcD <= dstD {
-			continue
-		}
-
-		cc -= int64(op) & IF >> 1 * cc
-
-		switch op & JMask {
-		case SJ:
-			mac.srcP += cc
-		case DJ:
-			mac.dstP += cc
-		case CJ:
-			mac.codP += cc
-		case VJ:
-			atomic.StoreInt64(&mac.data[mac.dstP], srcD+cc)
-			mac.srcP--
-			mac.dstP++
-
-			if m := mac.mtab[mac.dstP/BlockSize]; m != nil && m != &mac.Mutex && !m.TryLock() {
-				m.Unlock()
-			}
+	if op&MF == MF {
+		if mac.TryLock() {
+			mac.Lock()
+		} else {
+			mac.Unlock()
 		}
 	}
+
+	cc := Word(1)
+
+	if op&EF == EF {
+		cc = atomic.LoadInt64(&mac.data[mac.srcP])
+		mac.srcP--
+	}
+
+	srcD := atomic.LoadInt64(&mac.data[mac.srcP])
+	dstD := atomic.LoadInt64(&mac.data[mac.dstP])
+
+	if int64(op)&GC>>7*srcD >= dstD &&
+		int64(op)&EC>>6*srcD != dstD &&
+		int64(op)&LC>>5*srcD <= dstD {
+		return
+	}
+
+	cc -= int64(op) & IF >> 1 * cc
+
+	switch op & JMask {
+	case SJ:
+		mac.srcP += cc
+	case DJ:
+		mac.dstP += cc
+	case CJ:
+		mac.codP += cc
+	case VJ:
+		atomic.StoreInt64(&mac.data[mac.dstP], srcD+cc)
+		mac.srcP--
+		mac.dstP++
+
+		m := mac.mtab[mac.dstP/BlockSize]
+		if m != nil && m != &mac.Mutex && !m.TryLock() {
+			m.Unlock()
+		}
+	}
+}
+
+func (mac *Machine) Show() {
+	mac.codP = -1
+
+	for mac.codP+1 < Word(len(mac.code)) {
+		mac.Tick()
+	}
+}
+
+func (mac *Machine) DebugShow() {
+	buf := make([]byte, 0, 4096)
+
+	w := bufio.NewWriter(os.Stdout)
+
+	buf = mac.Dump(buf)
+	w.Write(buf)
+	buf = buf[:0]
+
+	mac.codP = -1
+
+	for mac.codP+1 < Word(len(mac.code)) {
+		mac.Tick()
+		buf = mac.Dump(buf)
+		w.Write(buf)
+		buf = buf[:0]
+	}
+
+	w.Flush()
 }
