@@ -143,8 +143,8 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	for {
 		cc := ap.peekByte()
 
-		dec := boolToByte(cc >= '0' && cc <= '9')
-		hex := boolToByte(cc >= 'A' && cc <= 'Z')
+		dec := boolToByte(cc >= '0' && cc <= '9' && cc < '0'+byte(base))
+		hex := boolToByte(cc >= 'A' && cc <= 'Z' && cc < '7'+byte(base))
 		if dec+hex == 0 {
 			break
 		}
