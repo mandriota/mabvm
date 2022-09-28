@@ -66,65 +66,52 @@ func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
 	}
 }
 
+func (mac *Machine) dumpFlag(w *bufio.Writer, f byte, msg string) {
+	if mac.code[mac.codP-1]&f == f {
+		w.WriteString(msg)
+	}
+}
+
 func (mac *Machine) Dump(w *bufio.Writer) {
-	w.WriteString("\n====================")
+	w.WriteString("\n==============================")
 
-	c := mac.code[mac.codP-1]
-
-	switch c & JMask {
+	switch mac.code[mac.codP-1] & JMask {
 	case SJ:
-		w.WriteString("\nSource Jump (SJ)")
+		w.WriteString("\nSJ: Source Jump")
 	case DJ:
-		w.WriteString("\nDestination Jump (DJ)")
+		w.WriteString("\nDJ: Destination Jump")
 	case CJ:
-		w.WriteString("\nCode Jump (CJ)")
+		w.WriteString("\nCJ: Code Jump")
 	case VJ:
-		w.WriteString("\nValue Jump (VJ)")
+		w.WriteString("\nVJ: Value Jump")
 	}
 
 	w.WriteString("\nFlags:")
 
-	if c&IF == IF {
-		w.WriteString("\n\tIF")
-	}
+	mac.dumpFlag(w, IF, "\n\tIF: Inversion Flag")
+	mac.dumpFlag(w, EF, "\n\tEF: Extension Flag")
+	mac.dumpFlag(w, MF, "\n\tMF: Mutex Flag")
+	mac.dumpFlag(w, LC, "\n\tLC: Lower Conditional")
+	mac.dumpFlag(w, EC, "\n\tEC: Equal Conditional")
+	mac.dumpFlag(w, GC, "\n\tGC: Greater Conditional")
 
-	if c&EF == EF {
-		w.WriteString("\n\tEF")
-	}
-
-	if c&MF == MF {
-		w.WriteString("\n\tMF")
-	}
-
-	if c&LC == LC {
-		w.WriteString("\n\tLC")
-	}
-
-	if c&EC == EC {
-		w.WriteString("\n\tEC")
-	}
-
-	if c&GC == GC {
-		w.WriteString("\n\tGC")
-	}
-
-	w.WriteString("\ncodP: ")
+	w.WriteString("\ncodP: Code Pointer: ")
 	w.WriteString(strconv.FormatInt(mac.codP, 16))
-	w.WriteString("\nsrcP: ")
+	w.WriteString("\nsrcP: Source Pointer: ")
 	w.WriteString(strconv.FormatInt(mac.srcP, 16))
-	w.WriteString("\ndstP: ")
+	w.WriteString("\ndstP: Destination Pointer: ")
 	w.WriteString(strconv.FormatInt(mac.dstP, 16))
 
-	w.WriteString("\ndata:")
+	w.WriteString("\nData:")
 
 	for i, el := range mac.data {
-		w.WriteString("\n\tword[")
+		w.WriteString("\n\tWord[")
 		w.WriteString(strconv.FormatInt(int64(i), 16))
 		w.WriteString("]: ")
 		w.WriteString(strconv.FormatInt(el, 16))
 	}
 
-	w.WriteString("\n====================\n")
+	w.WriteString("\n==============================\n")
 }
 
 func (mac *Machine) Tick() {
