@@ -15,6 +15,7 @@
 package mabvm
 
 import (
+	"bufio"
 	_ "embed"
 	"io"
 	"sync"
@@ -31,19 +32,15 @@ type Writer struct {
 	w io.Writer
 
 	wmem []Word
-	bmem []byte
+	rmem []byte
 }
 
-// TODO: add flusher interface instead of writer
-
-func NewWriter(w io.Writer, d []Word) *Writer {
+func NewWriter(w io.Writer, wm, rm []Word) *Writer {
 	return &Writer{
 		w:    w,
-		wmem: d,
-		bmem: unsafe.Slice(
-			(*byte)(unsafe.Pointer(&d[0])),
-			uintptr(len(d))*unsafe.Sizeof(d[0]),
-		),
+		wmem: wm,
+		rmem: unsafe.Slice((*byte)(unsafe.Pointer(&rm[0])),
+			uintptr(len(rm))*unsafe.Sizeof(rm[0])),
 	}
 }
 
@@ -60,9 +57,13 @@ func (w *Writer) Show() error {
 		}
 
 		if atomic.CompareAndSwapInt64(&w.wmem[len(w.wmem)-1], 1, 0) {
-			if _, err := w.w.Write(w.bmem[:len(w.bmem)-8]); err != nil {
-				return err
+			wr := bufio.NewWriter(w.w)
+
+			for i := 0; i < len(w.wmem)-1 && w.wmem[i+1] != 0; i += 2 {
+				wr.Write(w.rmem[w.wmem[i]*8 : (w.wmem[i]+w.wmem[i+1])*8])
 			}
+
+			wr.Flush()
 
 			for i := range w.wmem {
 				w.wmem[i] = 0

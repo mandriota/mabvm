@@ -28,25 +28,26 @@ func TestWriterRun(t *testing.T) {
 	textW := *(*Word)(unsafe.Pointer(&textB))
 
 	mac := NewMachine(
-		[]Code{VJ, DJ | EF, VJ},
-		append(make([]Word, 8190), 4094, textW-1),
+		[]Code{VJ, VJ, DJ | EF, VJ},
+		append(make([]Word, 8187), textW, 0, 4093, 0, 8186),
 		nil,
 	)
 
 	buf := bytes.NewBuffer(nil)
-	wrt := NewWriter(buf, mac.data[:4096])
+	wrt := NewWriter(buf, mac.data[:4096], mac.data)
+
 	go wrt.Show()
 
 	mac.Bind(&wrt.Mutex, wrt.Blocks())
 	mac.Show()
 
-	// wait for writer
-	runtime.GOMAXPROCS(runtime.NumGoroutine() + 1)
-	runtime.Gosched()
+	for buf.Len() == 0 {
+		runtime.Gosched()
+	}
 
 	assert.Equal(
 		t,
-		append(textB[:], make([]byte, 1<<15-16)...),
+		textB[:],
 		buf.Bytes(),
 	)
 }
