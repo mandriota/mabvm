@@ -156,8 +156,8 @@ func (mac *Machine) Tick() {
 		mac.dstP++
 
 		m := mac.mtab[mac.dstP/BlockSize]
-		if m != nil && m != &mac.Mutex && !m.TryLock() {
-			m.Unlock()
+		if m != nil && m != &mac.Mutex {
+			m.TryLock()
 		}
 	}
 
