@@ -60,7 +60,7 @@ func (w *Writer) Show() error {
 			wr := bufio.NewWriter(w.w)
 
 			for i := 0; i < len(w.wmem)-1 && w.wmem[i+1] != 0; i += 2 {
-				wr.Write(w.rmem[w.wmem[i]*8 : (w.wmem[i]+w.wmem[i+1])*8])
+				wr.Write(w.rmem[w.wmem[i]*8:][:w.wmem[i+1]*8])
 			}
 
 			wr.Flush()

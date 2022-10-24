@@ -72,7 +72,7 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			expect: []Word{9},
 		},
 		{
-			name:   "one hex digit",
+			name:   "one hexadecimal digit",
 			source: "+hB",
 			expect: []Word{0xB},
 		},
@@ -92,7 +92,7 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			expect: []Word{4993509343295043294},
 		},
 		{
-			name:   "positive hex number",
+			name:   "positive hexadecimal number",
 			source: "+h391AFE38F9C2DBAA",
 			expect: []Word{0x391AFE38F9C2DBAA},
 		},
@@ -112,9 +112,49 @@ func TestAsmParser_parseNumber(t *testing.T) {
 			expect: []Word{-3928419499493694382},
 		},
 		{
-			name:   "negative hex number",
+			name:   "negative hexadecimal number",
 			source: "-hAF483A34FE49BC2",
 			expect: []Word{-0xAF483A34FE49BC2},
+		},
+		{
+			name:   "one binary digit duplicate",
+			source: "+b1#100",
+			expect: []Word{0b1, 0b1, 0b1, 0b1},
+		},
+		{
+			name:   "one octave digit duplicate",
+			source: "+o7#5",
+			expect: []Word{07, 07, 07, 07, 07},
+		},
+		{
+			name:   "one decimal digit duplicate",
+			source: "+d9#8",
+			expect: []Word{9, 9, 9, 9, 9, 9, 9, 9},
+		},
+		{
+			name:   "one hexadecimal digit duplicate",
+			source: "+hA#B",
+			expect: []Word{0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA, 0xA},
+		},
+		{
+			name:   "binary number duplicate",
+			source: "+b1101#111",
+			expect: []Word{0b1101, 0b1101, 0b1101, 0b1101, 0b1101, 0b1101, 0b1101},
+		},
+		{
+			name:   "octave number duplicate",
+			source: "+o756#10",
+			expect: []Word{0756, 0756, 0756, 0756, 0756, 0756, 0756, 0756},
+		},
+		{
+			name:   "decimal number duplicate",
+			source: "+d783287#11",
+			expect: []Word{783287, 783287, 783287, 783287, 783287, 783287, 783287, 783287, 783287, 783287, 783287},
+		},
+		{
+			name:   "hexadecimal number duplicate",
+			source: "-h0000A000#1",
+			expect: []Word{-0xA000},
 		},
 	}
 
@@ -139,11 +179,11 @@ func TestAsmParserParse(t *testing.T) {
 	:V:E
 	:D
 	+b10111
-	:S:I
+	:S:I +hC0FFEE#6
 	:V:I`,
 		expect: &Machine{
 			code: []Code{VJ | EF, DJ, SJ | IF, VJ | IF},
-			data: []Word{0b1010, 643, 0746, 0b10111},
+			data: []Word{0b1010, 643, 0746, 0b10111, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE},
 		},
 	}
 

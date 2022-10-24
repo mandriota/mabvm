@@ -18,7 +18,6 @@ import (
 	"errors"
 	"io"
 	"strconv"
-	"unsafe"
 )
 
 type AsmParser struct {
@@ -108,8 +107,6 @@ yield:
 
 func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	sign := int64(1)
-	word := int64(0)
-	base := int64(0)
 
 	switch ap.peekByte() {
 	case '+':
@@ -122,6 +119,8 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	}
 
 	ap.readByte()
+
+	base := int64(0)
 
 	switch ap.peekByte() {
 	case 'b':
@@ -140,6 +139,26 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 
 	ap.readByte()
 
+	word := ap.parseNumberABS(base)
+
+	if ap.peekByte() != '#' {
+		mac.data = append(mac.data, word*sign)
+	} else {
+		ap.readByte()
+
+		off := len(mac.data)
+
+		mac.data = growSlice(mac.data, off+int(ap.parseNumberABS(base)))
+
+		for i := range mac.data[off:] {
+			mac.data[off+i] = word * sign
+		}
+	}
+
+	return nil
+}
+
+func (ap *AsmParser) parseNumberABS(base int64) (word int64) {
 	for {
 		cc := ap.peekByte()
 
@@ -155,8 +174,7 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 		ap.readByte()
 	}
 
-	mac.data = append(mac.data, word*sign)
-	return nil
+	return
 }
 
 func (ap *AsmParser) testFlag(name byte, code Code) Code {
@@ -194,17 +212,4 @@ func (ap *AsmParser) buildError(unexpect, expect string) error {
 	return errors.New("line " + strconv.Itoa(ap.line) +
 		": unexpected " + unexpect +
 		": " + expect + " expected")
-}
-
-func boolToByte(b bool) byte {
-	return *(*byte)(unsafe.Pointer(&b))
-}
-
-func isVoid(b byte) bool {
-	return b == '\x00' || b == ' ' || b == '\n' ||
-		b == '\r' || b == '\t' || b == '\v'
-}
-
-func isSpec(b byte) bool {
-	return b == '\x00' || b == ':' || b == '+' || b == '-'
 }

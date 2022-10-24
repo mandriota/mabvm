@@ -12,7 +12,7 @@
 
 ## Memory Model
 Linear array divided in 4KB blocks.
-Every single block have one owner indicated with mutex.
+Every single block have only one owner indicated with mutex.
 If a proccess wants to write not own block, block mutex must be locked.
 
 ## Opcode Model
