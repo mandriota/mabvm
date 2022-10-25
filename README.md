@@ -11,7 +11,7 @@
 ```
 
 ## Memory Model
-A linear array divided in 4KiB blocks.
+A linear array divided in 8x4KiB blocks.
 Every single block have only one owner indicated with mutex.
 If a proccess wants to write not own block, block mutex must be locked.
 

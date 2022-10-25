@@ -14,7 +14,7 @@
 
 // MabVM - Stack Virtual Machine named after Mab - Queen of The Faires.
 //
-// Its memory designed as a linear array divided in 4KiB blocks where each block has own mutex.
+// Its memory designed as a linear array divided in 8x4KiB blocks where each block has own mutex.
 // When some subject write to not self memory, there must be locked mutex.
 //
 // Each its instruction is derived from 1x 2-bit sequence jump code and 6x 1-bit flags.
