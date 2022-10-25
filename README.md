@@ -18,20 +18,19 @@ If a proccess wants to write not own block, block mutex must be locked.
 ## Opcode Model
 First 2 bits describes jump-table.
 Other 6 bits describes control and conditional flags.
-| JUMP  | FLAGS |
-| ----- | ----- |
-| 2-bit | 6-bit |
+| JUMP  | CONTROL FLAGS | CONDITIONAL FLAGS |
+| ----- | ------------- | ----------------- |
+| 2-bit | 3-bit         | 3-bit             |
 
 #### Assembler Instruction
 Each instruction is divided in 3 sections:
-- Jump-Table Section
-- Control Flags Section
-- Conditional Flags Section
-Every section must start with `:`.
+- Jump-Table Section, starts with `:`
+- Control Flags Section, starts with `'`
+- Conditional Flags Section, starts with `"`
 
 ##### Syntax
 ```
-:<S|D|C|V>:\[I][E][M]:\[L][E][G]
+:<S|D|C|V>'[I][E][M]"[L][E][G]
 ```
 
 ##### Jump-Table Section
@@ -42,13 +41,13 @@ Indicates with 1 character table to jump:
 - `V` indicated Value-Value Jump-Table
 
 ##### Control-Flags Section
-Indicates control flags with 0-3 ordered characters:
+Indicates control flags with 1-3 ordered characters:
 1. `I` inverts value
 2. `E` extends value
 3. `M` locks proccess until one of blocks will rewrited
 
 ##### Conditional-Flags Section
-Indicates instruction condition to executed with 0-3 ordered characters:
+Indicates instruction condition to executed with 1-3 ordered characters:
 1. `L` executes if source is lower than destination
 2. `E` executes if source is equal to destination
 3. `G` executes if source is greater than destination

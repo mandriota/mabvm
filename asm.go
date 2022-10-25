@@ -37,7 +37,7 @@ func (ap *AsmParser) Parse(mac *Machine) error {
 	}
 
 	for {
-		switch err := ap.parseOpcode(mac); err {
+		switch err := ap.parseOpcodeOrNumber(mac); err {
 		case nil:
 		case io.EOF:
 			return nil
@@ -47,18 +47,18 @@ func (ap *AsmParser) Parse(mac *Machine) error {
 	}
 }
 
-func (ap *AsmParser) parseOpcode(mac *Machine) (err error) {
-	ap.nextSect()
+func (ap *AsmParser) parseOpcodeOrNumber(mac *Machine) (err error) {
+	ap.iterateSection()
 
-	if ap.peekByte() != ':' {
+	if ap.currentCharacter() != ':' {
 		return ap.parseNumber(mac)
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
 	op := Code(0)
 
-	switch ap.peekByte() {
+	switch ap.currentCharacter() {
 	case 'S':
 		op = SJ
 	case 'D':
@@ -71,36 +71,33 @@ func (ap *AsmParser) parseOpcode(mac *Machine) (err error) {
 		return ap.buildError("character", "table")
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
-	if ap.peekByte() != ':' {
-		goto yield
+	if cc := ap.currentCharacter(); cc != '\'' && cc != '"' {
+		goto fini
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
 	op |= ap.testFlag('I', IF)
 	op |= ap.testFlag('E', EF)
 	op |= ap.testFlag('M', MF)
 
-	if ap.peekByte() != ':' {
-		if b := ap.peekByte(); !isVoid(b) {
-			return ap.buildError("character", "control flag")
-		}
-		goto yield
+	if cc := ap.currentCharacter(); cc != '"' {
+		goto fini
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
 	op |= ap.testFlag('L', LC)
 	op |= ap.testFlag('E', EC)
 	op |= ap.testFlag('G', GC)
 
-	if b := ap.peekByte(); !isVoid(b) {
+fini:
+	if cc := ap.currentCharacter(); !isVoid(cc) {
 		return ap.buildError("character", "conditional flag")
 	}
 
-yield:
 	mac.code = append(mac.code, op)
 	return nil
 }
@@ -108,7 +105,7 @@ yield:
 func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	sign := int64(1)
 
-	switch ap.peekByte() {
+	switch ap.currentCharacter() {
 	case '+':
 	case '-':
 		sign = -1
@@ -118,11 +115,11 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 		return ap.buildError("character", "sign")
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
 	base := int64(0)
 
-	switch ap.peekByte() {
+	switch ap.currentCharacter() {
 	case 'b':
 		base = 2
 	case 'o':
@@ -137,14 +134,14 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 		return ap.buildError("character", "base")
 	}
 
-	ap.readByte()
+	ap.iterateCharacter()
 
 	word := ap.parseNumberABS(base)
 
-	if ap.peekByte() != '#' {
+	if ap.currentCharacter() != '#' {
 		mac.data = append(mac.data, word*sign)
 	} else {
-		ap.readByte()
+		ap.iterateCharacter()
 
 		off := len(mac.data)
 
@@ -160,7 +157,7 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 
 func (ap *AsmParser) parseNumberABS(base int64) (word int64) {
 	for {
-		cc := ap.peekByte()
+		cc := ap.currentCharacter()
 
 		dec := boolToByte(cc >= '0' && cc <= '9' && cc < '0'+byte(base))
 		hex := boolToByte(cc >= 'A' && cc <= 'Z' && cc < '7'+byte(base))
@@ -168,39 +165,38 @@ func (ap *AsmParser) parseNumberABS(base int64) (word int64) {
 			break
 		}
 
-		word *= base
-		word += int64(cc - '0'*dec - '7'*hex)
+		word = word*base + int64(cc-'0'*dec-'7'*hex)
 
-		ap.readByte()
+		ap.iterateCharacter()
 	}
 
 	return
 }
 
 func (ap *AsmParser) testFlag(name byte, code Code) Code {
-	if ap.peekByte() == name {
-		ap.readByte()
+	if ap.currentCharacter() == name {
+		ap.iterateCharacter()
 		return code
 	}
 
 	return 0
 }
 
-func (ap *AsmParser) nextSect() {
-	for c := ap.peekByte(); !isSpec(c); c = ap.peekByte() {
-		if c == '\n' {
+func (ap *AsmParser) iterateSection() {
+	for cc := ap.currentCharacter(); !isSpec(cc); cc = ap.currentCharacter() {
+		if cc == '\n' {
 			ap.line++
 		}
 
-		ap.readByte()
+		ap.iterateCharacter()
 	}
 }
 
-func (ap *AsmParser) readByte() {
+func (ap *AsmParser) iterateCharacter() {
 	ap.pos++
 }
 
-func (ap *AsmParser) peekByte() byte {
+func (ap *AsmParser) currentCharacter() byte {
 	if ap.pos < len(ap.src) {
 		return ap.src[ap.pos]
 	}

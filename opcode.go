@@ -12,22 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// MabVM - Stack Virtual Machine named after Mab - Queen of The Faires.
+//
+// Its memory designed as a linear array divided in 4KB blocks where each block have own mutex.
+// When some subject write to not self memory, there must be locked mutex.
+//
+// Each its instruction is derived from 1x 2-bit sequence jump code and 6x 1-bit flags.
+// Each instruction increases own sequence number by value which defaultly is equal to 1.
 package mabvm
 
 const (
-	IF = 1 << iota << 2 // inv. flag
-	EF                  // ext. flag : y :
-	MF                  // mut. flag
-	LC                  // low. cnd. flag
-	EC                  // equ. cnd. flag
-	GC                  // gre. cnd. flag
+	// IF - Inversion Flag. Inverts value.
+	IF = 1 << iota << 2
+
+	// EF - Extension Flag. Extends value from source.
+	EF
+
+	// MF - Mutex Flag. Blocks execution until the current block is changed.
+	MF
+
+	// LC - Lower Conditional flag. Will executed only if source is lower than destination.
+	LC
+
+	// EC - Equal Conditional flag. Will executed only if source is equal to destination.
+	EC
+
+	// GC - Greater Conditional Flag. Will executed only if source is greater than destination.
+	GC
 )
 
 const (
-	SJ = iota // jump src head/tail table :: z
-	DJ        // jump dst head/tail table :: z
-	CJ        // jump code head/tail table :: z
-	VJ        // jump value head/tail table : x : z
+	// SJ - Source Jump. Increments source pointer.
+	SJ = iota
+
+	// DJ - Destination Jump. Increments destination pointer.
+	DJ
+
+	// CJ - Code Jump. Increments code pointer.
+	CJ
+
+	// VJ - Value Jump. Increments value.
+	VJ
 )
 
+// JMask - mask for table jumps.
 const JMask = SJ | DJ | CJ | VJ

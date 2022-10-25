@@ -28,12 +28,12 @@ func TestAsmParser_parseOpcode(t *testing.T) {
 	}{
 		{
 			name:   "maximal case",
-			source: ":D:IEM:LEG",
+			source: `:D'IEM"LEG`,
 			expect: []Code{DJ | IF | EF | MF | LC | EC | GC},
 		},
 		{
 			name:   "minimal case",
-			source: ":V",
+			source: `:V`,
 			expect: []Code{VJ},
 		},
 	}
@@ -44,7 +44,7 @@ func TestAsmParser_parseOpcode(t *testing.T) {
 
 			ap := NewAsmParser(test.source)
 
-			assert.Equal(t, nil, ap.parseOpcode(mc))
+			assert.Equal(t, nil, ap.parseOpcodeOrNumber(mc))
 			assert.Equal(t, test.expect, mc.code)
 		})
 	}
@@ -176,11 +176,11 @@ func TestAsmParserParse(t *testing.T) {
 		expect *Machine
 	}{
 		source: `	+b1010 +d643 +o746
-	:V:E
+	:V'E
 	:D
 	+b10111
-	:S:I +hC0FFEE#6
-	:V:I`,
+	:S'I +hC0FFEE#6
+	:V'I`,
 		expect: &Machine{
 			code: []Code{VJ | EF, DJ, SJ | IF, VJ | IF},
 			data: []Word{0b1010, 643, 0746, 0b10111, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE, 0xC0FFEE},
@@ -196,7 +196,7 @@ func TestAsmParserParse(t *testing.T) {
 }
 
 func BenchmarkAsmParserParse(b *testing.B) {
-	src := `+d484932984 :D:I :V :S :D:I :V:I :S :D`
+	src := `+d484932984 :D'I :V :S :D'I :V'I :S :D`
 
 	ap := NewAsmParser(src)
 	mc := &Machine{}
