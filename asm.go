@@ -68,7 +68,7 @@ func (ap *AsmParser) parseOpcodeOrNumber(mac *Machine) (err error) {
 	case 'V':
 		op = VJ
 	default:
-		return ap.buildError("character", "table")
+		return ap.buildError("character", "sequence-jump ('S'; 'D'; 'C'; 'V')")
 	}
 
 	ap.iterateCharacter()
@@ -95,7 +95,7 @@ func (ap *AsmParser) parseOpcodeOrNumber(mac *Machine) (err error) {
 
 fini:
 	if cc := ap.currentCharacter(); !isVoid(cc) {
-		return ap.buildError("character", "conditional flag")
+		return ap.buildError("character sequence", "flag sequence ('I' - 'E' - 'M' - 'L' - 'E' - 'G')")
 	}
 
 	mac.code = append(mac.code, op)
@@ -112,7 +112,7 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	case '\x00':
 		return io.EOF
 	default:
-		return ap.buildError("character", "sign")
+		return ap.buildError("character", "sign ('+'; '-')")
 	}
 
 	ap.iterateCharacter()
@@ -129,18 +129,19 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	case 'h':
 		base = 16
 	case '\x00':
-		return ap.buildError("EOF", "base")
+		return ap.buildError("EOF", "base ('b'; 'o'; 'd'; 'h')")
 	default:
-		return ap.buildError("character", "base")
+		return ap.buildError("character", "base ('b'; 'o'; 'd'; 'h')")
 	}
 
 	ap.iterateCharacter()
 
 	word := ap.parseNumberABS(base)
 
-	if ap.currentCharacter() != '#' {
+	switch cc := ap.currentCharacter(); {
+	case isVoid(cc):
 		mac.data = append(mac.data, word*sign)
-	} else {
+	case cc == '#':
 		ap.iterateCharacter()
 
 		off := len(mac.data)
@@ -150,6 +151,8 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 		for i := range mac.data[off:] {
 			mac.data[off+i] = word * sign
 		}
+	default:
+		return ap.buildError("character", "space or '#'")
 	}
 
 	return nil

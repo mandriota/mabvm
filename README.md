@@ -1,5 +1,5 @@
 # Mab Virtual Machine
-**Esoteric Stack Language Virtual Machine**
+**Stack Virtual Machine named after Mab - Queen of The Faires**
 ```text
                         . _______      . _________
      . _____      . _____.|     |      |.|       |__________________________
@@ -11,12 +11,12 @@
 ```
 
 ## Memory Model
-Linear array divided in 4KB blocks.
+A linear array divided in 4KiB blocks.
 Every single block have only one owner indicated with mutex.
 If a proccess wants to write not own block, block mutex must be locked.
 
 ## Opcode Model
-First 2 bits describes jump-table.
+First 2 bits describes sequence.
 Other 6 bits describes control and conditional flags.
 | JUMP  | CONTROL FLAGS | CONDITIONAL FLAGS |
 | ----- | ------------- | ----------------- |
@@ -24,7 +24,7 @@ Other 6 bits describes control and conditional flags.
 
 #### Assembler Instruction
 Each instruction is divided in 3 sections:
-- Jump-Table Section, starts with `:`
+- Jump-Sequence Section, starts with `:`
 - Control Flags Section, starts with `'`
 - Conditional Flags Section, starts with `"`
 
@@ -33,12 +33,12 @@ Each instruction is divided in 3 sections:
 :<S|D|C|V>'[I][E][M]"[L][E][G]
 ```
 
-##### Jump-Table Section
-Indicates with 1 character table to jump:
-- `S` indicates Source-Value Jump-Table
-- `D` indicates Destination-Value Jump-Table
-- `C` indicated Counter-Value Jump-Table
-- `V` indicated Value-Value Jump-Table
+##### Sequence-Jump Section
+Indicates with 1 character sequence to jump:
+- `S` indicates Source-Value Jump-Sequence
+- `D` indicates Destination-Value Jump-Sequence
+- `C` indicated Counter-Value Jump-Sequence
+- `V` indicated Value-Value Jump-Sequence
 
 ##### Control-Flags Section
 Indicates control flags with 1-3 ordered characters:
