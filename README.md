@@ -34,20 +34,25 @@ Each instruction is divided in 3 sections:
 ```
 
 ##### Sequence-Jump Section
-Indicates with 1 character sequence to jump:
-- `S` indicates Source-Value Jump-Sequence
-- `D` indicates Destination-Value Jump-Sequence
-- `C` indicated Counter-Value Jump-Sequence
-- `V` indicated Value-Value Jump-Sequence
+| code | letter | src (`=dst−k`) | dst (`=src+k`) |
+| ---- | ------ | -------------- | -------------- |
+| 0x0  | S      | data src ptr   | data src ptr   |
+| 0x1  | D      | data dst ptr   | data dst ptr   |
+| 0x2  | C      | code ptr       | code ptr       |
+| 0x3  | V      | data src       | data dst       |
 
 ##### Control-Flags Section
-Indicates control flags with 1-3 ordered characters:
-1. `I` inverts value
-2. `E` extends value
-3. `M` locks proccess until one of blocks will rewrited
+| code | letter | action                      | description                |
+| ---- | ------ | --------------------------- | -------------------------- |
+| 0x4  | I      | `k=−k`                      | inverts `k`                |
+| 0x8  | E      | `k=k×data[src]; src=src−1`  | extends `k`                |
+| 0x10 | M      | `sleep for locked mutex`    | locks proccess until write |
+*Indicates mode to execute instruction with 1-3 ordered characters.*
 
 ##### Conditional-Flags Section
-Indicates instruction condition to executed with 1-3 ordered characters:
-1. `L` executes if source is lower than destination
-2. `E` executes if source is equal to destination
-3. `G` executes if source is greater than destination
+| code | letter | meaning | action      | description                        |
+| ---- | ------ | ------- | ----------- | ---------------------------------- |
+| 0x20 | L      | lower   | `src<dst`   | source is lower than destination   |
+| 0x40 | E      | equal   | `src=dst`   | source is equal to destination     |
+| 0x80 | G      | greater | `src>dst`   | source is greater than destination |
+*Indicates condition to execute instruction with 1-3 ordered characters.*
