@@ -20,7 +20,6 @@ import (
 	"io"
 	"sync"
 	"sync/atomic"
-	"unsafe"
 )
 
 // Writer - basic buffered writer interface.
@@ -39,8 +38,7 @@ func NewWriter(w io.Writer, wm, rm []Word) *Writer {
 	return &Writer{
 		w:    w,
 		wmem: wm,
-		rmem: unsafe.Slice((*byte)(unsafe.Pointer(&rm[0])),
-			uintptr(len(rm))*unsafe.Sizeof(rm[0])),
+		rmem: byteSliceOf(rm),
 	}
 }
 

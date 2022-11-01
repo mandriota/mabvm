@@ -16,19 +16,24 @@ package mabvm
 
 import "unsafe"
 
-func growSlice[E any](s []E, size int) []E {
-	if cap(s) < size {
-		temp := make([]E, size)
-		copy(temp, s)
+func growSlice[E any](s []E, l int) []E {
+	if cap(s) < l {
+		t := make([]E, l)
+		copy(t, s)
 
-		return temp
+		return t
 	}
 
-	return s[:size]
+	return s[:l]
 }
 
-func boolToByte(b bool) byte {
-	return *(*byte)(unsafe.Pointer(&b))
+func byteSliceOf[E any](s []E) []byte {
+	return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])),
+		uintptr(len(s))*unsafe.Sizeof(s[0]))
+}
+
+func byteOf[T any](v T) byte {
+	return *(*byte)(unsafe.Pointer(&v))
 }
 
 func isVoid(b byte) bool {

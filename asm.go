@@ -162,8 +162,8 @@ func (ap *AsmParser) parseNumberABS(base int64) (word int64) {
 	for {
 		cc := ap.currentCharacter()
 
-		dec := boolToByte(cc >= '0' && cc <= '9' && cc < '0'+byte(base))
-		hex := boolToByte(cc >= 'A' && cc <= 'Z' && cc < '7'+byte(base))
+		dec := byteOf(cc >= '0' && cc <= '9' && cc < '0'+byte(base))
+		hex := byteOf(cc >= 'A' && cc <= 'Z' && cc < '7'+byte(base))
 		if dec+hex == 0 {
 			break
 		}
