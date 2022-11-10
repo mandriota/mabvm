@@ -32,7 +32,7 @@ func TestMachineRun(t *testing.T) {
 				m := NewMachine(
 					[]Code{VJ | EF},
 					[]Word{2, 3},
-					nil,
+					new(MutexTab),
 				)
 				return m
 			},
@@ -44,7 +44,7 @@ func TestMachineRun(t *testing.T) {
 				m := NewMachine(
 					[]Code{VJ | IF | EF},
 					[]Word{3, 2},
-					nil,
+					new(MutexTab),
 				)
 				return m
 			},
@@ -56,7 +56,7 @@ func TestMachineRun(t *testing.T) {
 				m := NewMachine(
 					[]Code{VJ | EF},
 					[]Word{0, 7},
-					nil,
+					new(MutexTab),
 				)
 				return m
 			},
@@ -78,7 +78,7 @@ func BenchmarkMachineRun(b *testing.B) {
 	mac := NewMachine(
 		[]Code{VJ, DJ | IF, SJ, VJ, DJ | IF, SJ, VJ, DJ | IF, SJ, VJ, DJ | IF, SJ},
 		[]Word{0, 123},
-		nil,
+		new(MutexTab),
 	)
 
 	for i := 0; i < b.N; i++ {

@@ -30,7 +30,7 @@ func TestWriterRun(t *testing.T) {
 	mac := NewMachine(
 		[]Code{VJ, VJ, DJ | EF, VJ},
 		append(make([]Word, 8187), textW, 0, 4093, 0, 8186),
-		nil,
+		new(MutexTab),
 	)
 
 	buf := bytes.NewBuffer(nil)
