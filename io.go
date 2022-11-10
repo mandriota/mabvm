@@ -48,11 +48,7 @@ func (w *Writer) Blocks() int {
 
 func (w *Writer) Show() error {
 	for {
-		if w.TryLock() {
-			w.Lock()
-		} else {
-			w.Unlock()
-		}
+		await(&w.Mutex)
 
 		if atomic.CompareAndSwapInt64(&w.wmem[len(w.wmem)-1], 1, 0) {
 			wr := bufio.NewWriter(w.w)

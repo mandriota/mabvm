@@ -14,7 +14,10 @@
 
 package mabvm
 
-import "unsafe"
+import (
+	"sync"
+	"unsafe"
+)
 
 func growSlice[E any](s []E, l int) []E {
 	if cap(s) < l {
@@ -30,6 +33,14 @@ func growSlice[E any](s []E, l int) []E {
 func byteSliceOf[E any](s []E) []byte {
 	return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])),
 		uintptr(len(s))*unsafe.Sizeof(s[0]))
+}
+
+func await(m *sync.Mutex) {
+	if m.TryLock() {
+		m.Lock()
+	} else {
+		m.Unlock()
+	}
 }
 
 func byteOf[T any](v T) byte {

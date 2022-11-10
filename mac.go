@@ -118,11 +118,7 @@ func (mac *Machine) Tick() {
 	op := mac.code[mac.codP]
 
 	if op&MF == MF {
-		if mac.TryLock() {
-			mac.Lock()
-		} else {
-			mac.Unlock()
-		}
+		await(&mac.Mutex)
 	}
 
 	cc := Word(1)
