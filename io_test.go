@@ -41,7 +41,7 @@ func TestWriterRun(t *testing.T) {
 	mac.Bind(&wrt.Mutex, wrt.Blocks())
 	mac.Show()
 
-	for buf.Len() == 0 {
+	for buf.Len() < len(textB) {
 		runtime.Gosched()
 	}
 
