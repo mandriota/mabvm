@@ -26,19 +26,22 @@ import (
 // If last memory byte is 1 then flushes
 // all memory without last bit to output.
 type Writer struct {
-	sync.Mutex
+	sync.RWMutex
 
 	w io.Writer
 
 	wmem []Word
 	rmem []byte
+
+	mtab *MutexTab
 }
 
-func NewWriter(w io.Writer, wm, rm []Word) *Writer {
+func NewWriter(w io.Writer, wm, rm []Word, mtab *MutexTab) *Writer {
 	return &Writer{
 		w:    w,
 		wmem: wm,
 		rmem: byteSliceOf(rm),
+		mtab: mtab,
 	}
 }
 
@@ -48,13 +51,19 @@ func (w *Writer) Blocks() int {
 
 func (w *Writer) Show() error {
 	for {
-		await(&w.Mutex)
+		await(&w.RWMutex)
 
 		if atomic.CompareAndSwapInt64(&w.wmem[len(w.wmem)-1], 1, 0) {
 			wr := bufio.NewWriter(w.w)
 
 			for i := 0; i < len(w.wmem)-1 && w.wmem[i+1] != 0; i += 2 {
-				wr.Write(w.rmem[w.wmem[i]*8:][:w.wmem[i+1]*8])
+				k := w.wmem[i+1]
+
+				for j := w.wmem[i] / BlockSize; (j-1)*BlockSize <= k; j++ {
+					(*w.mtab)[j].RLock()
+					wr.Write(w.rmem[max(j*BlockSize, w.wmem[i])*8:][:min(k, (j+1)*BlockSize)*8])
+					(*w.mtab)[j].RUnlock()
+				}
 			}
 
 			wr.Flush()

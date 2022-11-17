@@ -32,10 +32,10 @@ type Code = byte
 
 type Word = int64
 
-type MutexTab []*sync.Mutex
+type MutexTab []*sync.RWMutex
 
 type Machine struct {
-	sync.Mutex
+	sync.RWMutex
 
 	codP Word
 	srcP Word
@@ -55,13 +55,13 @@ func NewMachine(code []Code, data []Word, mtab *MutexTab) *Machine {
 		mtab: mtab,
 	}
 
-	mac.Bind(&mac.Mutex, len(mac.data)>>12-len(*mac.mtab)+1)
+	mac.Bind(&mac.RWMutex, len(mac.data)>>12-len(*mac.mtab)+1)
 
 	return mac
 }
 
-func (mac *Machine) Bind(m *sync.Mutex, blocks int) {
-	*mac.mtab = append(*mac.mtab, make([]*sync.Mutex, blocks)...)
+func (mac *Machine) Bind(m *sync.RWMutex, blocks int) {
+	*mac.mtab = append(*mac.mtab, make([]*sync.RWMutex, blocks)...)
 
 	for i := range (*mac.mtab)[len(*mac.mtab)-blocks:] {
 		(*mac.mtab)[i] = m
@@ -120,7 +120,7 @@ func (mac *Machine) Tick() {
 	op := mac.code[mac.codP]
 
 	if op&MF == MF {
-		await(&mac.Mutex)
+		await(&mac.RWMutex)
 	}
 
 	cc := Word(1)
@@ -153,9 +153,9 @@ func (mac *Machine) Tick() {
 		mac.srcP--
 		mac.dstP++
 
-		m := (*mac.mtab)[mac.dstP/BlockSize]
-		if m != nil && m != &mac.Mutex {
-			m.TryLock()
+		dstM := (*mac.mtab)[mac.dstP/BlockSize]
+		if dstM != nil && dstM != &mac.RWMutex {
+			dstM.TryLock()
 		}
 	}
 

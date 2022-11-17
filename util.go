@@ -19,6 +19,11 @@ import (
 	"unsafe"
 )
 
+type integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}
+
 func growSlice[E any](s []E, l int) []E {
 	if cap(s) < l {
 		t := make([]E, l)
@@ -30,12 +35,16 @@ func growSlice[E any](s []E, l int) []E {
 	return s[:l]
 }
 
+func byteOf[T any](v T) byte {
+	return *(*byte)(unsafe.Pointer(&v))
+}
+
 func byteSliceOf[E any](s []E) []byte {
 	return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])),
 		uintptr(len(s))*unsafe.Sizeof(s[0]))
 }
 
-func await(m *sync.Mutex) {
+func await(m *sync.RWMutex) {
 	if m.TryLock() {
 		m.Lock()
 	} else {
@@ -43,8 +52,20 @@ func await(m *sync.Mutex) {
 	}
 }
 
-func byteOf[T any](v T) byte {
-	return *(*byte)(unsafe.Pointer(&v))
+func min[T integer](a, b T) T {
+	if a < b {
+		return a
+	}
+
+	return b
+}
+
+func max[T integer](a, b T) T {
+	if a > b {
+		return a
+	}
+
+	return b
 }
 
 func isVoid(b byte) bool {

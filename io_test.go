@@ -34,11 +34,11 @@ func TestWriterRun(t *testing.T) {
 	)
 
 	buf := bytes.NewBuffer(nil)
-	wrt := NewWriter(buf, mac.data[:4096], mac.data)
+	wrt := NewWriter(buf, mac.data[:4096], mac.data, mac.mtab)
 
 	go wrt.Show()
 
-	mac.Bind(&wrt.Mutex, wrt.Blocks())
+	mac.Bind(&wrt.RWMutex, wrt.Blocks())
 	mac.Show()
 
 	for buf.Len() < len(textB) {
