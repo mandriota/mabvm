@@ -40,8 +40,8 @@ func byteOf[T any](v T) byte {
 }
 
 func byteSliceOf[E any](s []E) []byte {
-	return unsafe.Slice((*byte)(unsafe.Pointer(&s[0])),
-		uintptr(len(s))*unsafe.Sizeof(s[0]))
+	return unsafe.Slice((*byte)(unsafe.Pointer(unsafe.SliceData(s))),
+		uintptr(len(s))*unsafe.Sizeof(*new(E)))
 }
 
 func await(m *sync.RWMutex) {

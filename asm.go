@@ -18,6 +18,7 @@ import (
 	"errors"
 	"io"
 	"strconv"
+	"strings"
 )
 
 type AsmParser struct {
@@ -27,8 +28,8 @@ type AsmParser struct {
 	line int
 }
 
-func NewAsmParser(src string) *AsmParser {
-	return &AsmParser{src: src}
+func NewAsmParser(src string) AsmParser {
+	return AsmParser{src: src}
 }
 
 func (ap *AsmParser) Parse(mac *Machine) error {
@@ -208,7 +209,9 @@ func (ap *AsmParser) currentCharacter() byte {
 }
 
 func (ap *AsmParser) buildError(unexpect, expect string) error {
-	return errors.New("line " + strconv.Itoa(ap.line) +
-		": unexpected " + unexpect +
-		": " + expect + " expected")
+	return errors.New(strings.Join([]string{
+		"line ", strconv.Itoa(ap.line),
+		": unexpected ", unexpect,
+		": ", expect, " expected",
+	}, ""))
 }
