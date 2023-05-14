@@ -75,17 +75,17 @@ func (mac *Machine) dumpFlag(w *bufio.Writer, f byte, msg string) {
 }
 
 func (mac *Machine) Dump(w *bufio.Writer) {
-	w.WriteString("\n==============================")
+	w.WriteString("\n==============================\n")
 
 	switch mac.code[mac.codP-1] & JMask {
 	case SJ:
-		w.WriteString("\nSJ: Source Jump")
+		w.WriteString("SJ: Source Jump")
 	case DJ:
-		w.WriteString("\nDJ: Destination Jump")
+		w.WriteString("DJ: Destination Jump")
 	case CJ:
-		w.WriteString("\nCJ: Code Jump")
+		w.WriteString("CJ: Code Jump")
 	case VJ:
-		w.WriteString("\nVJ: Value Jump")
+		w.WriteString("VJ: Value Jump")
 	}
 
 	w.WriteString("\nFlags:")
