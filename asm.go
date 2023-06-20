@@ -49,7 +49,7 @@ func (ap *AsmParser) Parse(mac *Machine) error {
 }
 
 func (ap *AsmParser) parseOpcodeOrNumber(mac *Machine) (err error) {
-	ap.iterateSection()
+	ap.skipWhitespaces()
 
 	if ap.currentCharacter() != ':' {
 		return ap.parseNumber(mac)
@@ -69,7 +69,7 @@ func (ap *AsmParser) parseOpcodeOrNumber(mac *Machine) (err error) {
 	case 'V':
 		op = VJ
 	default:
-		return ap.buildError("character", "sequence-jump ('S'; 'D'; 'C'; 'V')")
+		return ap.buildError("character", "sequence-jump ('S' | 'D' | 'C' | 'V')")
 	}
 
 	ap.iterateCharacter()
@@ -110,10 +110,13 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	case '+':
 	case '-':
 		sign = -1
+	case ';':
+		ap.skipComment()
+		return nil
 	case '\x00':
 		return io.EOF
 	default:
-		return ap.buildError("character", "sign ('+'; '-')")
+		return ap.buildError("character", "sign ('+' | '-')")
 	}
 
 	ap.iterateCharacter()
@@ -130,9 +133,9 @@ func (ap *AsmParser) parseNumber(mac *Machine) (err error) {
 	case 'h':
 		base = 16
 	case '\x00':
-		return ap.buildError("EOF", "base ('b'; 'o'; 'd'; 'h')")
+		return ap.buildError("EOF", "base ('b' | 'o' | 'd' | 'h')")
 	default:
-		return ap.buildError("character", "base ('b'; 'o'; 'd'; 'h')")
+		return ap.buildError("character", "base ('b' | 'o' | 'd' | 'h')")
 	}
 
 	ap.iterateCharacter()
@@ -186,8 +189,14 @@ func (ap *AsmParser) testFlag(name byte, code Code) Code {
 	return 0
 }
 
-func (ap *AsmParser) iterateSection() {
-	for cc := ap.currentCharacter(); !isSpec(cc); cc = ap.currentCharacter() {
+func (ap *AsmParser) skipComment() {
+	for cc := ap.currentCharacter(); cc != '\n' && cc != '\x00'; cc = ap.currentCharacter() {
+		ap.iterateCharacter()
+	}
+}
+
+func (ap *AsmParser) skipWhitespaces() {
+	for cc := ap.currentCharacter(); isVoid(cc) && cc != '\x00'; cc = ap.currentCharacter() {
 		if cc == '\n' {
 			ap.line++
 		}

@@ -72,7 +72,3 @@ func isVoid(b byte) bool {
 	return b == '\x00' || b == ' ' || b == '\n' ||
 		b == '\r' || b == '\t' || b == '\v'
 }
-
-func isSpec(b byte) bool {
-	return b == '\x00' || b == ':' || b == '+' || b == '-'
-}
