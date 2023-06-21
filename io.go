@@ -51,7 +51,7 @@ func (w *Writer) Blocks() int {
 
 func (w *Writer) Show() error {
 	for {
-		await(&w.RWMutex)
+		synchronize(&w.RWMutex)
 
 		if atomic.CompareAndSwapInt64(&w.wmem[len(w.wmem)-1], 1, 0) {
 			wr := bufio.NewWriter(w.w)

@@ -120,7 +120,7 @@ func (mac *Machine) Tick() {
 	op := mac.code[mac.codP]
 
 	if op&MF == MF {
-		await(&mac.RWMutex)
+		synchronize(&mac.RWMutex)
 	}
 
 	cc := Word(1)

@@ -44,7 +44,7 @@ func byteSliceOf[E any](s []E) []byte {
 		uintptr(len(s))*unsafe.Sizeof(*new(E)))
 }
 
-func await(m *sync.RWMutex) {
+func synchronize(m *sync.RWMutex) {
 	if m.TryLock() {
 		m.Lock()
 	} else {
